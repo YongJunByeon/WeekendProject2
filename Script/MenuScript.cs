@@ -9,6 +9,7 @@ public class MenuScript : MonoBehaviour {
     private UILabel inputTime;
 
     private GameObject letterGame;
+    private GameObject shakeGame;
     private GameObject inMain;
     [SerializeField]
     private GameObject result;
@@ -28,6 +29,7 @@ public class MenuScript : MonoBehaviour {
             inputTime = temp.Find("Time").Find("Input").Find("Label").GetComponent<UILabel>();
         }
         if (letterGame == null) letterGame = temp.parent.parent.Find("LetterFind").gameObject;
+        if (shakeGame == null) shakeGame = temp.parent.parent.Find("ShakeShake").gameObject;
         if (inMain == null) inMain = temp.parent.gameObject;
         if (result == null) result = temp.parent.parent.Find("Result").gameObject;
     }
@@ -45,9 +47,25 @@ public class MenuScript : MonoBehaviour {
         inMain.SetActive(false);
         letterGame.SetActive(true);
     }
+    // TODO ::추후 레터랑 합치기
+    public void ShakeGameStart()
+    {
+        int val1 = 0;
+        int val2 = 0;
+
+        if (int.TryParse(inputCount.text, out val1) == false) val1 = 0;
+        else val1 = int.Parse(inputCount.text);
+        if (int.TryParse(inputTime.text, out val2) == false) val2 = 0;
+
+        this.GetComponent<WordScript>().QuizSet(val1, val2 * 60);
+
+        inMain.SetActive(false);
+        shakeGame.SetActive(true);
+    }
     public void BackToMenu()
     {
         letterGame.SetActive(false);
+        shakeGame.SetActive(false);
         result.SetActive(false);
         inMain.SetActive(true);
          inputCount.parent.GetComponent<UIInput>().LoadValue();
@@ -61,6 +79,7 @@ public class MenuScript : MonoBehaviour {
     {
         //게임은 끄고
         letterGame.SetActive(false);
+        shakeGame.SetActive(false);
 
         result.SetActive(true);
         UILabel resultText = result.transform.Find("Label").GetComponent<UILabel>();

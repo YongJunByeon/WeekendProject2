@@ -8,6 +8,8 @@ public class TopMenuScript : MonoBehaviour {
     int remainingCount;//남은문제
     int curCount;//맞춘 문제
     string quizAnswer;//문제정답, 해석은 필요 없다고 판단
+    Transform before;
+    LetterSetter field;//hasa관계를 꾀함 드래그,드롭식의 퀴즈존을 쓰기 위함
 
    public UILabel timeLabel;
    public UILabel countLabel;
@@ -16,11 +18,14 @@ public class TopMenuScript : MonoBehaviour {
 
 	// Use this for initialization
 	void Start () {
+        if(field == null)
+        field = transform.parent.Find("WordScrollView").GetComponent<LetterSetter>();
         timeLabel = transform.Find("Time").GetComponent<UILabel>();
         countLabel = transform.Find("Progress").GetComponent<UILabel>();
         meaning = transform.Find("Mean").GetComponent<UILabel>();
         blankWords = transform.Find("Blanks").GetComponent<UILabel>();
-
+        if (before == null)
+            before = transform.Find("Before");
     }
 	
 	// Update is called once per frame
@@ -66,10 +71,52 @@ public class TopMenuScript : MonoBehaviour {
         if (FillCheck() == false || remainingCount < curCount) return;
 
         var temp = WordScript.inst.GetQuiz();
+        //
+        before.Find("Word").GetComponent<UILabel>().text = quizAnswer;
+        before.Find("Mean").GetComponent<UILabel>().text = meaning.text;
+
         meaning.text = temp.Value;
         quizAnswer = temp.Key;
 
         SetBlankWords();
+    }
+    //스트링을 받는게 아니라 리스트를 받는다 그리고 거기의 맨앞자리부터 꺼내서비교함
+    //드래그하면서 리스트는 위치가 바뀌는 불상사가 생길거긴함
+    public void FillBlankWords(string s)
+    {
+        Debug.Log("조건 1: " + s.IndexOf(quizAnswer.ToUpper() ) );
+        Debug.Log("조건2 : " + quizAnswer.Length);
+        Debug.Log("조건2의 다른수 "  +field.transform.Find("Field").GetComponent<UIGrid>().maxPerLine );
+        if (s.Length <= 0) return;
+        //불일치 혹은 길이가 최대 행길이를 넘겼다면 index상으로 0번째 위치가 아닌가?
+        if( s != quizAnswer.ToUpper() ||
+            (quizAnswer.Length <= field.transform.Find("Field").GetComponent<UIGrid>().maxPerLine &&
+            s.IndexOf(quizAnswer.ToUpper() ) != 0 ) )
+        {
+            timeLimit -= 5f;
+            return;
+        }
+        else
+        {
+            Debug.Log("정ㄷ");
+            curCount++;
+            if (remainingCount < curCount) return;
+
+            countLabel.text = curCount.ToString() + " / " + remainingCount.ToString();            
+            var temp = WordScript.inst.GetQuiz();
+            //
+            before.Find("Word").GetComponent<UILabel>().text = quizAnswer;
+            before.Find("Mean").GetComponent<UILabel>().text = meaning.text;
+
+            meaning.text = temp.Value;
+            quizAnswer = temp.Key;
+
+            field.AutoSetField(temp.Key);
+            SetBlankWords();
+
+        }
+
+
     }
     public void FillBlankWords(char a)
     {
@@ -113,16 +160,18 @@ public class TopMenuScript : MonoBehaviour {
     {
         Start();//enable이 먼저 시작됨 따라서 임의로 이렇게 호출시킴
         curCount = 1;//새로시작이니 1로 초기화
-
+        
         var temp = WordScript.inst.GetQuiz();
         timeLimit = WordScript.inst.Time;
         Debug.Log(timeLimit +" --'");
         remainingCount = WordScript.inst.Count;
-
 //        timeLabel.text = timeLimit.ToString();//임시
         countLabel.text = curCount.ToString() + " / " + remainingCount.ToString();
         meaning.text = temp.Value;
         quizAnswer = temp.Key;
+
+        if (field.mode == GameMode.DRAGWORD)
+            field.AutoSetField(temp.Key);
         SetBlankWords();
         Debug.Log("정답 : " + quizAnswer);
 
